@@ -16,3 +16,28 @@ const addTradeBtn = document.getElementById("addTradeBtn");
 const loadTradesBtn = document.getElementById("loadTradesBtn");
 const tradeMessage = document.getElementById("tradeMessage");
 const tradesTableBody = document.getElementById("tradesTableBody");
+
+async function registerUser() {
+  const payload = {
+    username: usernameInput.value.trim(),
+    password: passwordInput.value.trim()
+  };
+
+  if (!payload.username || !payload.password) {
+    authMessage.textContent = "Please enter username and password";
+    return;
+  }
+
+  const response = await fetch("/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+  authMessage.textContent = data.message || "Register completed";
+}
+
+registerBtn.addEventListener("click", registerUser);
