@@ -5,6 +5,7 @@ const passwordInput = document.getElementById("password");
 const registerBtn = document.getElementById("registerBtn");
 const loginBtn = document.getElementById("loginBtn");
 const authMessage = document.getElementById("authMessage");
+const sessionMessage = document.getElementById("sessionMessage");
 
 const tickerInput = document.getElementById("ticker");
 const directionInput = document.getElementById("direction");
@@ -13,34 +14,53 @@ const exitPriceInput = document.getElementById("exitPrice");
 const quantityInput = document.getElementById("quantity");
 const notesInput = document.getElementById("notes");
 const addTradeBtn = document.getElementById("addTradeBtn");
-const loadTradesBtn = document.getElementById("loadTradesBtn");
-const tradeMessage = document.getElementById("tradeMessage");
 const tradesTableBody = document.getElementById("tradesTableBody");
+const tradeMessage = document.getElementById("tradeMessage");
 
-async function registerUser() {
-  const payload = {
-    username: usernameInput.value.trim(),
-    password: passwordInput.value.trim()
-  };
+function updateAuthUIAfterLogin(username) {
+  registerBtn.classList.add("hidden");
+  loginBtn.classList.add("hidden");
+  sessionMessage.textContent = `Connected as ${username}`;
+}
 
-  if (!payload.username || !payload.password) {
-    authMessage.textContent = "Please enter username and password";
+function clearTradeForm() {
+  tickerInput.value = "";
+  directionInput.value = "Long";
+  entryPriceInput.value = "";
+  exitPriceInput.value = "";
+  quantityInput.value = "";
+  notesInput.value = "";
+}
+
+function renderTrades(trades) {
+  tradesTableBody.innerHTML = "";
+
+  for (const trade of trades) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${trade.id}</td>
+      <td>${trade.ticker ?? ""}</td>
+      <td>${trade.direction ?? ""}</td>
+      <td>${trade.entry_price ?? ""}</td>
+      <td>${trade.exit_price ?? ""}</td>
+      <td>${trade.quantity ?? ""}</td>
+      <td>${trade.notes ?? ""}</td>
+    `;
+    tradesTableBody.appendChild(row);
+  }
+}
+
+async function loadTrades() {
+  if (!currentUserId) {
     return;
   }
 
-  const response = await fetch("/register", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
-  });
-
+  const response = await fetch(`/users/${currentUserId}/trades`);
   const data = await response.json();
-  authMessage.textContent = data.message || "Register completed";
-}
 
-registerBtn.addEventListener("click", registerUser);
+  renderTrades(data);
+  tradeMessage.textContent = `Loaded ${data.length} trades`;
+}
 
 async function loginUser() {
   const payload = {
@@ -65,13 +85,44 @@ async function loginUser() {
 
   if (data.user_id) {
     currentUserId = data.user_id;
-    authMessage.textContent = `Login successful. User ID: ${currentUserId}`;
+    authMessage.textContent = "Login successful";
+    updateAuthUIAfterLogin(payload.username);
+    await loadTrades();
   } else {
     authMessage.textContent = data.message || "Login failed";
   }
 }
 
-loginBtn.addEventListener("click", loginUser);
+async function registerUser() {
+  const payload = {
+    username: usernameInput.value.trim(),
+    password: passwordInput.value.trim()
+  };
+
+  if (!payload.username || !payload.password) {
+    authMessage.textContent = "Please enter username and password";
+    return;
+  }
+
+  const response = await fetch("/register", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (data.id) {
+    currentUserId = data.id;
+    authMessage.textContent = "Registration successful and logged in";
+    updateAuthUIAfterLogin(payload.username);
+    await loadTrades();
+  } else {
+    authMessage.textContent = data.message || "Registration failed";
+  }
+}
 
 async function addTrade() {
   if (!currentUserId) {
@@ -102,39 +153,17 @@ async function addTrade() {
   });
 
   const data = await response.json();
-  tradeMessage.textContent = data.message || "Trade added";
+
+  if (data.trade_id) {
+    tradeMessage.textContent = "Trade created successfully";
+    clearTradeForm();
+    await loadTrades();
+  } else {
+    tradeMessage.textContent = data.message || "Failed to create trade";
+  }
 }
 
+registerBtn.addEventListener("click", registerUser);
+loginBtn.addEventListener("click", loginUser);
 addTradeBtn.addEventListener("click", addTrade);
 
-async function loadTrades() {
-  if (!currentUserId) {
-    tradeMessage.textContent = "Please login first";
-    return;
-  }
-
-  const response = await fetch(`/users/${currentUserId}/trades`);
-  const data = await response.json();
-
-  tradesTableBody.innerHTML = "";
-
-  for (const trade of data) {
-    const row = document.createElement("tr");
-
-    row.innerHTML = `
-      <td>${trade.id}</td>
-      <td>${trade.ticker}</td>
-      <td>${trade.direction}</td>
-      <td>${trade.entry_price ?? ""}</td>
-      <td>${trade.exit_price ?? ""}</td>
-      <td>${trade.quantity ?? ""}</td>
-      <td>${trade.notes ?? ""}</td>
-    `;
-
-    tradesTableBody.appendChild(row);
-  }
-
-  tradeMessage.textContent = `Loaded ${data.length} trades`;
-}
-
-loadTradesBtn.addEventListener("click", loadTrades);
