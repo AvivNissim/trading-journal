@@ -72,3 +72,38 @@ async function loginUser() {
 }
 
 loginBtn.addEventListener("click", loginUser);
+
+async function addTrade() {
+  if (!currentUserId) {
+    tradeMessage.textContent = "Please login first";
+    return;
+  }
+
+  const payload = {
+    ticker: tickerInput.value.trim(),
+    direction: directionInput.value,
+    entry_price: Number(entryPriceInput.value),
+    exit_price: exitPriceInput.value ? Number(exitPriceInput.value) : null,
+    quantity: Number(quantityInput.value),
+    notes: notesInput.value.trim()
+  };
+
+  if (!payload.ticker || !payload.entry_price || !payload.quantity) {
+    tradeMessage.textContent = "Please fill ticker, entry price and quantity";
+    return;
+  }
+
+  const response = await fetch(`/users/${currentUserId}/trades`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+  tradeMessage.textContent = data.message || "Trade added";
+}
+
+addTradeBtn.addEventListener("click", addTrade);
+
