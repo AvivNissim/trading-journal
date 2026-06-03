@@ -107,3 +107,34 @@ async function addTrade() {
 
 addTradeBtn.addEventListener("click", addTrade);
 
+async function loadTrades() {
+  if (!currentUserId) {
+    tradeMessage.textContent = "Please login first";
+    return;
+  }
+
+  const response = await fetch(`/users/${currentUserId}/trades`);
+  const data = await response.json();
+
+  tradesTableBody.innerHTML = "";
+
+  for (const trade of data) {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+      <td>${trade.id}</td>
+      <td>${trade.ticker}</td>
+      <td>${trade.direction}</td>
+      <td>${trade.entry_price ?? ""}</td>
+      <td>${trade.exit_price ?? ""}</td>
+      <td>${trade.quantity ?? ""}</td>
+      <td>${trade.notes ?? ""}</td>
+    `;
+
+    tradesTableBody.appendChild(row);
+  }
+
+  tradeMessage.textContent = `Loaded ${data.length} trades`;
+}
+
+loadTradesBtn.addEventListener("click", loadTrades);
