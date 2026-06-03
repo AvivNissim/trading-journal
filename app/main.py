@@ -1,9 +1,15 @@
-from fastapi import FastAPI
-from app.database import init_db
+from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 from app.database import init_db, get_connection
 from app.models import UserCreate, TradeCreate
 
+
+
 app = FastAPI()
+
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+templates = Jinja2Templates(directory="templates")
 
 @app.on_event("startup")
 def startup():
@@ -16,6 +22,14 @@ def root():
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+@app.get("/app")
+def app_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={}
+    )
 
 
 
