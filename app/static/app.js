@@ -41,3 +41,34 @@ async function registerUser() {
 }
 
 registerBtn.addEventListener("click", registerUser);
+
+async function loginUser() {
+  const payload = {
+    username: usernameInput.value.trim(),
+    password: passwordInput.value.trim()
+  };
+
+  if (!payload.username || !payload.password) {
+    authMessage.textContent = "Please enter username and password";
+    return;
+  }
+
+  const response = await fetch("/login", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (data.user_id) {
+    currentUserId = data.user_id;
+    authMessage.textContent = `Login successful. User ID: ${currentUserId}`;
+  } else {
+    authMessage.textContent = data.message || "Login failed";
+  }
+}
+
+loginBtn.addEventListener("click", loginUser);
