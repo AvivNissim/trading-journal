@@ -15,7 +15,7 @@ templates = Jinja2Templates(directory="templates")
 def startup():
     init_db()
 
-@app.get("/")
+@app.get("/app")
 def root():
     return {"message": "Trading Journal API running"}
 
