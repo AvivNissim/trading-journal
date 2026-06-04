@@ -8,8 +8,11 @@ from app.models import UserCreate, TradeCreate
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# app.mount("/static", StaticFiles(directory="app/static"), name="static")
+# templates = Jinja2Templates(directory="templates")
+
 templates = Jinja2Templates(directory="templates")
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
 
 @app.on_event("startup")
 def startup():
@@ -27,14 +30,13 @@ def app_page(request: Request):
 def health():
     return {"status": "ok"}
 
-@app.get("/app")
-def app_page(request: Request):
-    return templates.TemplateResponse(
-        request=request,
-        name="index.html",
-        context={}
-    )
-
+# @app.get("/app")
+# def app_page(request: Request):
+#     return templates.TemplateResponse(
+#         request=request,
+#         name="index.html",
+#         context={}
+#     )
 
 
 @app.post("/register")
