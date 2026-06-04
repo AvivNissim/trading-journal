@@ -16,8 +16,12 @@ def startup():
     init_db()
 
 @app.get("/app")
-def root():
-    return {"message": "Trading Journal API running"}
+def app_page(request: Request):
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={"request": request}
+    )
 
 @app.get("/health")
 def health():
