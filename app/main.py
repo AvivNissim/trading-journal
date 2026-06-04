@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from app.database import init_db, get_connection
@@ -17,6 +17,10 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 @app.on_event("startup")
 def startup():
     init_db()
+
+@app.get("/")
+def root():
+    return RedirectResponse(url="/app")
 
 @app.get("/app")
 def app_page(request: Request):
