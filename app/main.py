@@ -75,26 +75,42 @@ def login(user: UserCreate):
     return {"message": "Login successful", "user_id": found_user["id"]}
 
 
-@app.post("/users/{user_id}/trades")
-def create_trade(user_id: int, trade: TradeCreate):
+@app.post("/trades")
+def create_trade(trade: TradeCreate, user_id: int):
     conn = get_connection()
     cursor = conn.cursor()
+
+    status = "closed" if trade.exit_price is not None else "open"
+
     cursor.execute("""
-        INSERT INTO trades (user_id, ticker, direction, entry_price, exit_price, quantity, notes)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO trades (
+            user_id, symbol, side, entry_price, exit_price, quantity,
+            entry_date, exit_date, status, setup, stop_loss,
+            take_profit, fees, notes
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     """, (
         user_id,
-        trade.ticker,
-        trade.direction,
+        trade.symbol.upper(),
+        trade.side.lower(),
         trade.entry_price,
         trade.exit_price,
         trade.quantity,
+        trade.entry_date.isoformat(),
+        trade.exit_date.isoformat() if trade.exit_date else None,
+        status,
+        trade.setup,
+        trade.stop_loss,
+        trade.take_profit,
+        trade.fees,
         trade.notes
     ))
+
     conn.commit()
     trade_id = cursor.lastrowid
     conn.close()
-    return {"message": "Trade created", "trade_id": trade_id}
+
+    return {"message": "Trade created", "trade_id": trade_id, "status": status}
 
 
 @app.get("/users/{user_id}/trades")
@@ -108,3 +124,49 @@ def get_user_trades(user_id: int):
     rows = cursor.fetchall()
     conn.close()
     return [dict(row) for row in rows]
+
+
+@app.put("/trades/{trade_id}")
+def update_trade(trade_id: int, trade: TradeCreate):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    status = "closed" if trade.exit_price is not None else "open"
+
+    cursor.execute("""
+        UPDATE trades
+        SET symbol = ?,
+            side = ?,
+            entry_price = ?,
+            exit_price = ?,
+            quantity = ?,
+            entry_date = ?,
+            exit_date = ?,
+            status = ?,
+            setup = ?,
+            stop_loss = ?,
+            take_profit = ?,
+            fees = ?,
+            notes = ?
+        WHERE id = ?
+    """, (
+        trade.symbol.upper(),
+        trade.side.lower(),
+        trade.entry_price,
+        trade.exit_price,
+        trade.quantity,
+        trade.entry_date.isoformat(),
+        trade.exit_date.isoformat() if trade.exit_date else None,
+        status,
+        trade.setup,
+        trade.stop_loss,
+        trade.take_profit,
+        trade.fees,
+        trade.notes,
+        trade_id
+    ))
+
+    conn.commit()
+    conn.close()
+
+    return {"message": "Trade updated", "status": status}

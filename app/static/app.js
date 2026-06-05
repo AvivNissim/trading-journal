@@ -17,6 +17,24 @@ const addTradeBtn = document.getElementById("addTradeBtn");
 const tradesTableBody = document.getElementById("tradesTableBody");
 const tradeMessage = document.getElementById("tradeMessage");
 
+const exitPriceValue = document.getElementById("exitPrice").value;
+const exitDateValue = document.getElementById("exitDate").value;
+
+const payload = {
+  symbol: document.getElementById("symbol").value,
+  side: document.getElementById("side").value,
+  entry_price: Number(document.getElementById("entryPrice").value),
+  exit_price: exitPriceValue === "" ? null : Number(exitPriceValue),
+  quantity: Number(document.getElementById("quantity").value),
+  entry_date: document.getElementById("entryDate").value,
+  exit_date: exitDateValue === "" ? null : exitDateValue,
+  setup: document.getElementById("setup").value || null,
+  stop_loss: document.getElementById("stopLoss").value === "" ? null : Number(document.getElementById("stopLoss").value),
+  take_profit: document.getElementById("takeProfit").value === "" ? null : Number(document.getElementById("takeProfit").value),
+  fees: document.getElementById("fees").value === "" ? 0 : Number(document.getElementById("fees").value),
+  notes: document.getElementById("notes").value || null
+};
+
 function updateAuthUIAfterLogin(username) {
   registerBtn.classList.add("hidden");
   loginBtn.classList.add("hidden");
@@ -37,14 +55,18 @@ function renderTrades(trades) {
 
   for (const trade of trades) {
     const row = document.createElement("tr");
+    const statusBadge = trade.status === "closed"
+      ? '<span class="badge closed">Closed</span>'
+      : '<span class="badge open">Open</span>';
     row.innerHTML = `
-      <td>${trade.id}</td>
-      <td>${trade.ticker ?? ""}</td>
-      <td>${trade.direction ?? ""}</td>
-      <td>${trade.entry_price ?? ""}</td>
-      <td>${trade.exit_price ?? ""}</td>
-      <td>${trade.quantity ?? ""}</td>
-      <td>${trade.notes ?? ""}</td>
+    <td>${trade.symbol}</td>
+    <td>${trade.side}</td>
+    <td>${trade.entry_price}</td>
+    <td>${trade.exit_price ?? "-"}</td>
+    <td>${trade.quantity}</td>
+    <td>${trade.entry_date}</td>
+    <td>${trade.exit_date ?? "-"}</td>
+    <td>${statusBadge}</td>
     `;
     tradesTableBody.appendChild(row);
   }
